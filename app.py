@@ -7,10 +7,11 @@ app = Flask(__name__)
 app.secret_key = os.urandom(24)
 app.register_blueprint(auth)
 
+
 def init_db():
     conn = sqlite3.connect('mesures.db')
     cursor = conn.cursor()
-    
+    """
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS mesures (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -21,7 +22,7 @@ def init_db():
         horodatage DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     ''')
-    
+    """
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,10 +34,6 @@ def init_db():
     
     conn.commit()
     conn.close()
-
-with app.app_context():
-    init_db()
-    print("Base de données initialisée avec succès")
 
 def get_measurements(measure_type):
     conn = sqlite3.connect('mesures.db')
@@ -73,5 +70,7 @@ def home():
     flash("Veuillez vous connecter pour accéder à cette page.", "error")
     return redirect(url_for('auth.handle_login'))
 
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+
+with app.app_context():
+    init_db()
+    print("Base de données initialisée avec succès")

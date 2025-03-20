@@ -2,6 +2,7 @@ import time
 import threading
 
 from current_data import CurrentData
+from app import *
 
 
 obj_Current_data = CurrentData()
@@ -33,10 +34,13 @@ if __name__ == "__main__":
 
     thread1 = threading.Thread(target=main_loop, args=(x_Stop_event,))
     thread2 = threading.Thread(target=listen_for_input, args=(x_Stop_event,))
+    thread3 = threading.Thread(target=app.run, kwargs={"debug": True, "host": "0.0.0.0"})
 
     thread1.start()
     thread2.start()
+    thread3.start()
 
     thread1.join()
     thread2.join()
+    thread3.join()
 
