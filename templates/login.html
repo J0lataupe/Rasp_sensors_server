@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOGIN</title>
+  <link rel="stylesheet" href="/static/requin_login.css">
+  <link href='https://fonts.googleapis.com/css?family=Press Start 2P' rel='stylesheet'>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="login_box">
+      <div class="login-header">
+        <span>login</span>
+      </div>
+
+      <div id="message" class="message"></div>
+
+      <form id="loginForm">
+        <div class="input_box">
+          <input type="text" id="username" name="username" class="input-field" autocomplete="off" required>
+          <label for="username" class="label">Nom d'utilisateur</label>
+        </div>
+
+        <div class="input_box">
+          <input type="password" id="password" name="password" class="input-field" autocomplete="off" required>
+          <label for="password" class="label">Mot de passe</label>
+        </div>
+
+        <div class="input_box">
+          <button type="submit" class="input-submit">Se connecter</button>
+        </div>
+      </form>
+      
+      <div class="register">
+        <span>Pas de compte ? <a href="/register">Inscription</a></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("loginForm").onsubmit = async function(event) {
+        event.preventDefault();
+
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+
+        try {
+            const response = await fetch("{{ url_for('auth.handle_login') }}", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                window.location.href = "/index";
+            } else {
+                
+                document.getElementById("message").textContent = data.error || "Identifiants incorrects";
+            }
+        } catch (error) {
+            console.error("Erreur :", error);
+            document.getElementById("message").textContent = "Erreur de connexion au serveur";
+        }
+    };
+  </script>
+</body>
+</html>

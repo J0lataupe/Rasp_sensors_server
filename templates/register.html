@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REGISTER</title>
+  <link rel="stylesheet" href="/static/requin_register.css">
+  <link href='https://fonts.googleapis.com/css?family=Press Start 2P' rel='stylesheet'>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="login_box">
+      <div class="login-header">
+        <span>register</span>
+      </div>
+
+      <div id="message" class="message"></div>
+
+      <form id="registerForm" method="POST">
+
+        <div class="input_box">
+          <input type="text" id="username" name="username" class="input-field" autocomplete="off" required>
+          <label for="username" class="label">Nom d'utilisateur</label>
+        </div>
+
+        <div class="input_box">
+          <input type="email" id="email" name="email" class="input-field" autocomplete="off" required>
+          <label for="email" class="label">Email</label>
+        </div>
+
+        <div class="input_box">
+          <input type="password" id="password" name="password" class="input-field" autocomplete="off" required>
+          <label for="password" class="label">Mot de passe</label>
+        </div>
+
+        <div class="input_box">
+          <input type="password" id="repassword" name="repassword" class="input-field" autocomplete="off" required>
+          <label for="repassword" class="label">Répéter le mot de passe</label>
+        </div>
+
+        <div class="input_box">
+          <button type="submit" class="input-submit">S'inscrire</button>
+        </div>
+      </form>
+
+      <div class="login">
+        <span>Vous avez déjà un compte ? <a href="/login">Connexion</a></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("registerForm").onsubmit = async function(event) {
+        event.preventDefault();
+
+        const username = document.getElementById("username").value;
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const repassword = document.getElementById("repassword").value;
+
+        console.log("Envoi de la requête POST...");
+
+        try {
+            const response = await fetch("/register", {  
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, email, password, repassword })
+            });
+
+            console.log("Statut de la réponse :", response.status);
+
+            const data = await response.json();
+            console.log("Réponse du serveur :", data);
+
+            if (data.success) {
+                window.location.href = "/login";  
+            } else {
+                document.getElementById("message").textContent = data.error || "Erreur lors de l'inscription.";
+                
+            }
+        } catch (error) {
+            console.error("Erreur lors de l'inscription :", error);
+            document.getElementById("message").textContent = "Une erreur est survenue. Veuillez réessayer.";
+            
+        }
+    };
+
+  </script>
+</body>
+</html>

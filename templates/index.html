@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="/static/requin_sitebase.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+  <nav>
+    <ul class="navbar">
+      <a class="icon-left">
+        <img src="{{ url_for('static', filename='format-left.svg') }}" class="icon_base">
+      </a>
+      <a href="/login" class="logout-link">
+        <img src="{{ url_for('static', filename='log-out.svg') }}" class="logout-icon" alt="Déconnexion">
+        <span class="logout-text">Déconnexion</span>
+      </a>
+    </ul>
+  </nav>
+
+  <div class="container">
+    <header>
+      <h1>Dashboard des Mesures</h1>
+      <p>Suivi des mesures collectées par des capteurs</p>
+    </header>
+
+    <main>
+      <section class="chart-section">
+        <h2>Graphique des Dernières Mesures</h2>
+        <canvas id="measureChart" width="400" height="200"></canvas>
+
+        <h3>Dernières Mesures</h3>
+        <div class="btn-container">
+          <button class="btn" onclick="showMeasureOptions()">Sélectionner une Mesure</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Temps</th>
+              <th>Mesure</th>
+            </tr>
+          </thead>
+          <tbody id="measureTableBody">
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <footer>
+      <p>&copy; 2025 Dashboard des Mesures. Tous droits réservés.</p>
+    </footer>
+  </div>
+
+  <script>
+    let measureChart = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      
+      const temperatures = JSON.parse('{{ temperatures | tojson | safe }}');
+
+      // Initialiser le graphique
+      const ctx = document.getElementById('measureChart').getContext('2d');
+      measureChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: temperatures.map(record => record.timestamp),
+          datasets: [{
+            label: 'temp',
+            data: temperatures.map(record => record.value),
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          plugins: {
+                legend: {
+                    labels: {
+                        color: 'red' 
+                    }
+                }
+            },
+          scales: {
+            x: {
+              ticks: {
+                color: 'blue' 
+              },
+              title: {
+                display: true,
+                text: 'Temps',
+                color: 'yellow'
+              }
+            },
+            y: {
+              ticks: {
+                color: 'blue',
+              },
+              title: {
+                display: true,
+                text: 'Valeur',
+                color: 'yellow'
+              }
+            }
+          }
+        }
+      });
+
+      updateTable(temperatures);
+    });
+
+    function showMeasureOptions() {
+      Swal.fire({
+        title: 'Choisissez une mesure',
+        input: 'select',
+        inputOptions: {
+          'temp': 'Température',
+          'pressure': 'Pression',
+          'flow': 'Débit'
+        },
+        inputPlaceholder: 'Sélectionnez une mesure...',
+        showCancelButton: true,
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Annuler'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          updateDashboard(result.value);
+        }
+      });
+    }
+
+    function updateDashboard(measureType) {
+      fetch(`/get_measure_data?measure=${measureType}`)
+        .then(response => response.json())
+        .then(data => {
+          updateChart(data, measureType);
+          updateTable(data);
+        })
+        .catch(err => {
+          console.error("Erreur de chargement des données:", err);
+        });
+    }
+
+    function updateChart(data, measureType) {
+      if (measureChart) {
+        measureChart.destroy();
+      }
+
+      const labels = data.map(item => item.timestamp);
+      const values = data.map(item => item.value);
+      
+
+      const ctx = document.getElementById('measureChart').getContext('2d');
+      measureChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: measureType,
+            data: values,
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.2)',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          plugins: {
+                legend: {
+                    labels: {
+                        color: 'blue' 
+                    }
+                }
+            },
+          scales: {
+            x: {
+              ticks: {
+                color: 'red' 
+              },
+              title: {
+                display: true,
+                text: 'Temps',
+                color: 'green'
+              }
+            },
+            y: {
+              ticks: {
+                color: 'red' 
+              },
+              title: {
+                display: true,
+                text: 'Valeur',
+                color: 'green'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateTable(data) {
+      const tbody = document.getElementById('measureTableBody');
+      tbody.innerHTML = ''; // Vider le tableau
+      if(data.length === 0){
+        tbody.innerHTML = '<tr><td colspan="2">Aucune donnée trouvée</td></tr>';
+      } else {
+        data.forEach(item => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${item.timestamp}</td><td>${item.value} ${item.unit || ''}</td>`;
+          tbody.appendChild(row);
+        });
+      }
+    }
+  </script>
+</body>
+</html>
