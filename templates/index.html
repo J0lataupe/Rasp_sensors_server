@@ -53,7 +53,7 @@
       <p>&copy; 2025 Dashboard des Mesures. Tous droits réservés.</p>
     </footer>
   </div>
-
+  <!--
   <script>
     let measureChart = null;
 
@@ -66,7 +66,7 @@
       measureChart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: temperatures.map(record => record.timestamp),
+          labels: temperatures.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).map(record => record.timestamp),
           datasets: [{
             label: 'temp',
             data: temperatures.map(record => record.value),
@@ -148,7 +148,8 @@
         measureChart.destroy();
       }
 
-      const labels = data.map(item => item.timestamp);
+      const Tri = data.sort((a,b)=> new Data(a.timestamp) - new Data(b.timestamp));
+      const labels = data.map(item => item.value);
       const values = data.map(item => item.value);
       
 
@@ -211,6 +212,378 @@
           tbody.appendChild(row);
         });
       }
+    }
+  </script>
+  
+<script>
+    let measureChart = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+      
+      const temperatures = JSON.parse('{{ temperatures | tojson | safe }}');
+
+      // Initialiser le graphique
+      const ctx = document.getElementById('measureChart').getContext('2d');
+      measureChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: temperatures.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).map(record => record.timestamp),
+          datasets: [{
+            label: 'temp',
+            data: temperatures.map(record => record.value),
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          plugins: {
+                legend: {
+                    labels: {
+                        color: 'red' 
+                    }
+                }
+            },
+          scales: {
+            x: {
+              ticks: {
+                color: 'blue' 
+              },
+              title: {
+                display: true,
+                text: 'Temps',
+                color: 'yellow'
+              }
+            },
+            y: {
+              ticks: {
+                color: 'blue',
+              },
+              title: {
+                display: true,
+                text: 'Valeur',
+                color: 'yellow'
+              }
+            }
+          }
+        }
+      });
+
+      updateTable(temperatures);
+    });
+
+    function showMeasureOptions() {
+      Swal.fire({
+        title: 'Choisissez une mesure',
+        input: 'select',
+        inputOptions: {
+          'temp': 'Température',
+          'pressure': 'Pression',
+          'flow': 'Débit'
+        },
+        inputPlaceholder: 'Sélectionnez une mesure...',
+        showCancelButton: true,
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Annuler'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          updateDashboard(result.value);
+        }
+      });
+    }
+
+    function updateDashboard(measureType) {
+      fetch(`/get_measure_data?measure=${measureType}`)
+        .then(response => response.json())
+        .then(data => {
+          if (measureChart && measureChart.data.datasets[0].label === measureType) {
+            // Mettre à jour le graphique existant si la mesure est la même
+            updateChart(data, measureType);
+          } else {
+            // Détruire et recréer le graphique si la mesure change
+            if (measureChart) {
+              measureChart.destroy();
+            }
+            updateChart(data, measureType);
+          }
+          updateTable(data);
+        })
+        .catch(err => {
+          console.error("Erreur de chargement des données:", err);
+        });
+    }
+
+    function updateChart(data, measureType) {
+ 
+      const sortedData = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+      const labels = sortedData.map(item => item.timestamp);
+      const values = sortedData.map(item => item.value);
+
+      // Mise à jour des données du graphique existant
+      if (measureChart) {
+        // Mettre à jour les labels
+        measureChart.data.labels = labels;
+
+        // Mettre à jour les données du dataset
+        measureChart.data.datasets[0].data = values;
+        measureChart.data.datasets[0].label = measureType;
+
+        measureChart.data.datasets[0].borderColor = '#007bff';
+        measureChart.data.datasets[0].backgroundColor = 'rgba(0, 123, 255, 0.2)';
+
+        // Appliquer les modifications et animer la transition
+        measureChart.update();
+      } else {
+        // Si le graphique n'existe pas, le créer
+        const ctx = document.getElementById('measureChart').getContext('2d');
+        measureChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: measureType,
+              data: values,
+              borderColor: '#007bff',
+              backgroundColor: 'rgba(0, 123, 255, 0.2)',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            plugins: {
+              legend: {
+                labels: {
+                  color: 'blue'
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: 'red'
+                },
+                title: {
+                  display: true,
+                  text: 'Temps',
+                  color: 'green'
+                }
+              },
+              y: {
+                ticks: {
+                  color: 'red'
+                },
+                title: {
+                  display: true,
+                  text: 'Valeur',
+                  color: 'green'
+                }
+              }
+            },
+            animation: {
+              duration: 1000,
+              easing: 'easeInOutQuad'
+            }
+          }
+        });
+      }
+    }
+
+    function updateTable(data) {
+      const tbody = document.getElementById('measureTableBody');
+      tbody.innerHTML = '';
+
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2">Aucune donnée trouvée</td></tr>';
+      } else {
+        // Inverser l'ordre des données
+        const reversedData = data.reverse();
+
+        reversedData.forEach(item => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${item.timestamp}</td><td>${item.value} ${item.unit || ''}</td>`;
+          tbody.appendChild(row);
+        });
+      }
+    }
+</script>
+-->
+<script>
+    let measureChart; // Déclarer measureChart au niveau global
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const temperatures = JSON.parse('{{ temperatures | tojson | safe }}');
+
+      // Initialiser le graphique
+      const ctx = document.getElementById('measureChart').getContext('2d');
+      measureChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: temperatures.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)).map(record => record.timestamp),
+          datasets: [{
+            label: 'temp',
+            data: temperatures.map(record => record.value),
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          plugins: {
+            legend: {
+              labels: {
+                color: 'red'
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: 'blue'
+              },
+              title: {
+                display: true,
+                text: 'Temps',
+                color: 'yellow'
+              }
+            },
+            y: {
+              ticks: {
+                color: 'blue'
+              },
+              title: {
+                display: true,
+                text: 'Valeur',
+                color: 'yellow'
+              }
+            }
+          },
+          animation: {
+            duration: 1000,
+            easing: 'easeInOutQuad'
+          }
+        }
+      });
+
+      updateTable(temperatures);
+    });
+
+    function showMeasureOptions() {
+      Swal.fire({
+        title: 'Choisissez une mesure',
+        input: 'select',
+        inputOptions: {
+          'temp': 'Température',
+          'pressure': 'Pression',
+          'flow': 'Débit'
+        },
+        inputPlaceholder: 'Sélectionnez une mesure...',
+        showCancelButton: true,
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Annuler'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const measureType = result.value;
+          updateDashboard(measureType);
+          startAutoRefresh(measureType); // Démarrer le rafraîchissement automatique
+        }
+      });
+    }
+
+    function updateDashboard(measureType) {
+      fetch(`/get_measure_data?measure=${measureType}`)
+        .then(response => response.json())
+        .then(data => {
+          console.log("Données reçues:", data); // Vérifiez les données
+          updateChart(data, measureType);
+          updateTable(data);
+        })
+        .catch(err => {
+          console.error("Erreur de chargement des données:", err);
+        });
+    }
+
+    function updateChart(data, measureType) {
+      const sortedData = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      const labels = sortedData.map(item => item.timestamp);
+      const values = sortedData.map(item => item.value);
+
+      if (measureChart) {
+        measureChart.data.labels = labels;
+        measureChart.data.datasets[0].data = values;
+        measureChart.data.datasets[0].label = measureType;
+        measureChart.update();
+      } else {
+        const ctx = document.getElementById('measureChart').getContext('2d');
+        measureChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: measureType,
+              data: values,
+              borderColor: '#007bff',
+              backgroundColor: 'rgba(0, 123, 255, 0.2)',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            plugins: {
+              legend: {
+                labels: {
+                  color: 'blue'
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: 'red'
+                },
+                title: {
+                  display: true,
+                  text: 'Temps',
+                  color: 'green'
+                }
+              },
+              y: {
+                ticks: {
+                  color: 'red'
+                },
+                title: {
+                  display: true,
+                  text: 'Valeur',
+                  color: 'green'
+                }
+              }
+            },
+            animation: {
+              duration: 1000,
+              easing: 'easeInOutQuad'
+            }
+          }
+        });
+      }
+    }
+
+    function updateTable(data) {
+      const tbody = document.getElementById('measureTableBody');
+      tbody.innerHTML = '';
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2">Aucune donnée trouvée</td></tr>';
+      } else {
+        const reversedData = [...data].reverse(); // Inverser les données
+        reversedData.forEach(item => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${item.timestamp}</td><td>${item.value} ${item.unit || ''}</td>`;
+          tbody.appendChild(row);
+        });
+      }
+    }
+
+    function startAutoRefresh(measureType, interval = 5000) {
+      setInterval(() => {
+        updateDashboard(measureType);
+      }, interval);
     }
   </script>
 </body>
