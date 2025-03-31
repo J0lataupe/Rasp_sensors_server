@@ -41,12 +41,12 @@ def get_measurements(measure_type):
     conn = sqlite3.connect('mesures.db')
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT valeur, horodatage, unite FROM mesures WHERE type_mesure = ? ORDER BY horodatage DESC LIMIT 10", 
+        "SELECT id, capteur, type_mesure, valeur, horodatage, unite FROM mesures WHERE type_mesure = ? ORDER BY horodatage DESC LIMIT 10", 
         (measure_type,)
     )
     rows = cursor.fetchall()
     conn.close()
-    return [{"value": row[0], "timestamp": row[1], "unit": row[2]} for row in rows]
+    return [{"id": row[0], "capteur": row[1], "type_mesure": row[2], "valeur": row[3], "horodatage": row[4], "unite": row[5]} for row in rows]
 
 @app.route('/shutdown', methods=['GET'])
 def shutdown():

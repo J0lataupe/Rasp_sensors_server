@@ -64,6 +64,7 @@
       fetch('/get_alarms')
         .then(response => response.json())
         .then(data => {
+          console.log("Données :", data);
           const banner = document.getElementById('alarmBanner');
           if (data.alarms && data.alarms.length > 0) {
             banner.innerHTML = data.alarms.join('<br>');
@@ -227,10 +228,12 @@
 
       data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-      const FilteredData = data.filter(item => item.type === measureType);
+      const FilteredData = data.filter(item => item.f_Value === measureType);
+
+      console.log(FilteredData);
       FilteredData.forEach(item => {
           const row = document.createElement('tr');
-          row.innerHTML = `<td>${item.timestamp}</td><td>${item.value} ${item.unit || ''}</td>`;
+          row.innerHTML = `<td>${item.timestamp}</td><td>${item.valeur} ${item.unite || ''}</td>`;
           tbody.insertBefore(row, tbody.firstChild);
       });
 

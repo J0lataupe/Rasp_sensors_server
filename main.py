@@ -35,13 +35,13 @@ def stop_flask():
     """ Fonction pour arreter proprement Flask """
     print("Arrêt du serveur Flask...")
     try:
-        requests.get("http://127.0.0.1:5000/shutdown")
+        requests.get("http://0.0.0.0:5000/shutdown")
     except Exception as e:
         print(f"Erreur lors de l'arrêt de Flask: {e}")
 
 
 def run_flask():
-    app.run(debug=True, host='127.0.0.1', use_reloader=False)
+    app.run(debug=True, host='0.0.0.0', use_reloader=False)
 
 if __name__ == "__main__":
     x_Stop_event = threading.Event()
