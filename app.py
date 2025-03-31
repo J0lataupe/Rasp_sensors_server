@@ -78,8 +78,8 @@ def index():
         flash("Veuillez vous connecter pour accéder à cette page.", "error")
         return redirect(url_for('auth.handle_login'))
 
-    temperatures = get_measurements("temp")
-    return render_template("index.html", temperatures=temperatures)
+    initData = get_measurements("Température")
+    return render_template("index.html", initData=initData)
 
 @app.route('/')
 def home():

@@ -89,30 +89,22 @@
     let refreshInterval = null; // Variable pour stocker l'intervalle
 
     document.addEventListener('DOMContentLoaded', function() {
-      const temperatures = JSON.parse('{{ temperatures | tojson | safe }}');
+      const initData = JSON.parse('{{ initData | tojson | safe }}');
       const ctx = document.getElementById('measureChart').getContext('2d');
+      const strInitData = "Température"
 
       if (temperatures.length > 0) {
-        initChart(temperatures, "Température");
+        initChart(temperatures, strInitData);
       } else {
-        initChart([], "Température");
+        initChart([], strInitData);
       }
 
-      updateTable(temperatures, "Température");
-      startAutoRefresh('Température');
+      updateTable(temperatures, strInitData);
+      startAutoRefresh(strInitData);
       
       // Vérifier les alarmes toutes les 2 secondes
       setInterval(checkAlarms, 2000);
     });
-
-    function startAutoRefresh(measureType, interval = 2000) {
-      if (refreshInterval) {
-        clearInterval(refreshInterval); 
-      }
-      refreshInterval = setInterval(() => {
-        updateDashboard(measureType);
-      }, interval);
-    }
 
     function updateDashboard(measureType) {
       fetch(`/get_measure_data?measure=${measureType}`)
@@ -124,8 +116,18 @@
             updateChart(data, measureType);
           }
           updateTable(data, measureType);
+          startAutoRefresh(measureType);
         })
         .catch(err => console.error("Erreur:", err));
+    }
+
+    function startAutoRefresh(measureType, interval = 2000) {
+      if (refreshInterval) {
+        clearInterval(refreshInterval); 
+      }
+      refreshInterval = setInterval(() => {
+        updateDashboard(measureType);
+      }, interval);
     }
 
     ///////////////////////////////////
@@ -214,20 +216,21 @@
 
     function updateTable(data, measureType) {
       const tbody = document.getElementById('measureTableBody');
+      data.sort((a, b) => new Date(a.horodatage) - new Date(b.horodatage));
+      const FilteredData = data.filter(item => item.type_mesure === measureType);
 
-      if (data.length === 0) {
+      if (FilteredData.length === 0) {
           tbody.innerHTML = '<tr><td colspan="2">Aucune donnée trouvée</td></tr>';
           return;
       }
 
-      data.sort((a, b) => new Date(a.horodatage) - new Date(b.horodatage));
-
-      const FilteredData = data.filter(item => item.type_mesure === measureType);
+      tbody.innerHTML = '';
       FilteredData.forEach(item => {
           const row = document.createElement('tr');
           row.innerHTML = `<td>${item.horodatage}</td><td>${item.valeur} ${item.unite || ''}</td>`;
-          tbody.insertBefore(row, tbody.firstChild);
+          tbody.appendChild(row);
       });
+    }
 
 
     ///////////////////////////////////
@@ -249,14 +252,11 @@
         cancelButtonText: 'Annuler'
       }).then((result) => {
         if (result.isConfirmed) {
-          const measureType = result.valeur;
+          const measureType = result.value;
           updateDashboard(measureType);
-          startAutoRefresh(measureType);
         }
       });
     }
-
-  }
   </script>
 </body>
 </html>

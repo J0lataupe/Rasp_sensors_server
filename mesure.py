@@ -12,7 +12,7 @@ class Mesure :
 
     def threshold_check(self) :
         if self.f_Value > self.f_Threshold_max or self.f_Value < self.f_Threshold_min :
-            alarm_message = f'⚠ Alerte : {self.str_Type_mesure} hors limites ! | Mesure : {self.f_Value}, Min : {self.f_Threshold_min}, Max : {self.f_Threshold_max}'
+            alarm_message = f'⚠ Alerte : {self.str_Type_mesure} hors limites ! | Min : {self.f_Threshold_min}, Max : {self.f_Threshold_max}'
             print(alarm_message)
             if alarm_message not in Mesure.current_alarms:
                 Mesure.current_alarms.append(alarm_message)
