@@ -1,7 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, session, flash, jsonify, request 
 from auth import auth
 import threading
-from collect_data import collect_data 
 import sqlite3
 import os
 
@@ -13,7 +12,7 @@ app.register_blueprint(auth)
 def init_db():
     conn = sqlite3.connect('mesures.db')
     cursor = conn.cursor()
-    
+    """
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS mesures (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,7 +23,7 @@ def init_db():
         horodatage DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     ''')
-    
+    """
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,7 +77,3 @@ with app.app_context():
     print("Base de données initialisée avec succès")
 
 
-if __name__ == '__main__':
-    collect_thread = threading.Thread(target=collect_data, daemon=True)
-    collect_thread.start()
-    app.run(debug=True, host='0.0.0.0')
