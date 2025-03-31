@@ -36,16 +36,18 @@
         <div class="btn-container">
           <button class="btn" onclick="showMeasureOptions()">Sélectionner une Mesure</button>
         </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Temps</th>
-              <th>Mesure</th>
-            </tr>
-          </thead>
-          <tbody id="measureTableBody">
-          </tbody>
-        </table>
+        <div id="tableContainer">
+          <table class="postable">
+              <thead>
+                  <tr>
+                      <th>Temps</th>
+                      <th>Mesure</th>
+                  </tr>
+              </thead>
+              <tbody id="measureTableBody">
+              </tbody>
+          </table>
+      </div>      
       </section>
     </main>
 
@@ -53,63 +55,124 @@
       <p>&copy; 2025 Dashboard des Mesures. Tous droits réservés.</p>
     </footer>
   </div>
-
+  
   <script>
     let measureChart = null;
+    let refreshInterval = null; // Variable pour stocker l'intervalle
 
     document.addEventListener('DOMContentLoaded', function() {
-      
       const temperatures = JSON.parse('{{ temperatures | tojson | safe }}');
-
-      // Initialiser le graphique
       const ctx = document.getElementById('measureChart').getContext('2d');
-      measureChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: temperatures.map(record => record.timestamp),
-          datasets: [{
-            label: 'temp',
-            data: temperatures.map(record => record.value),
-            borderColor: 'rgba(255, 99, 132, 1)',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            borderWidth: 2
-          }]
-        },
-        options: {
-          plugins: {
-                legend: {
-                    labels: {
-                        color: 'red' 
-                    }
-                }
-            },
-          scales: {
-            x: {
-              ticks: {
-                color: 'blue' 
-              },
-              title: {
-                display: true,
-                text: 'Temps',
-                color: 'yellow'
-              }
-            },
-            y: {
-              ticks: {
-                color: 'blue',
-              },
-              title: {
-                display: true,
-                text: 'Valeur',
-                color: 'yellow'
-              }
-            }
-          }
-        }
-      });
+
+      if (temperatures.length > 0) {
+        initChart(temperatures, "temp");
+      } else {
+        initChart([], "temp");
+      }
 
       updateTable(temperatures);
+      startAutoRefresh('temp');
     });
+
+    function startAutoRefresh(measureType, interval = 2000) {
+      if (refreshInterval) {
+        clearInterval(refreshInterval); 
+      }
+      refreshInterval = setInterval(() => {
+        updateDashboard(measureType);
+      }, interval);
+    }
+
+    function updateDashboard(measureType) {
+      fetch(`/get_measure_data?measure=${measureType}`)
+        .then(response => response.json())
+        .then(data => {
+          if (!measureChart || measureChart.data.datasets[0].label !== measureType) {
+            initChart(data, measureType);
+          } else {
+            updateChart(data, measureType);
+          }
+          updateTable(data);
+        })
+        .catch(err => console.error("Erreur:", err));
+    }
+
+    function updateChart(newData, measureType) {
+      if (!measureChart || newData.length === 0) return;
+
+      newData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      const lastRecord = newData[newData.length - 1];
+
+      const lastLabel = measureChart.data.labels[measureChart.data.labels.length - 1];
+      if (lastLabel !== lastRecord.timestamp) {
+          measureChart.data.labels.push(lastRecord.timestamp);
+          measureChart.data.datasets[0].data.push(lastRecord.value);
+
+          const maxPoints = 10;
+          if (measureChart.data.labels.length > maxPoints) {
+              measureChart.data.labels.shift();
+              measureChart.data.datasets[0].data.shift();
+          }
+
+          measureChart.update();
+      }
+  }
+
+    function initChart(newData, measureType) {
+      const ctx = document.getElementById('measureChart').getContext('2d');
+
+      // Supprimer l'ancien graphique s'il existe
+      if (measureChart) {
+          measureChart.destroy();
+      }
+
+      newData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+      const labels = newData.map(item => item.timestamp);
+      const values = newData.map(item => item.value);
+
+      measureChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+              labels: labels,
+              datasets: [{
+                  label: measureType,
+                  data: values,
+                  borderColor: '#007bff',
+                  backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                  borderWidth: 2
+              }]
+          },
+          options: {
+              plugins: {
+                  legend: {
+                      labels: {
+                          color: 'blue'
+                      }
+                  }
+              },
+              scales: {
+                  x: {
+                      ticks: { color: 'red' },
+                      title: { display: true, text: 'Temps', color: 'green' }
+                  },
+                  y: {
+                      ticks: { color: 'red' },
+                      title: { display: true, text: 'Valeur', color: 'green' }
+                  }
+              },
+              animation: {
+                  duration: 1000,
+                  easing: 'easeInOutQuad' 
+              }
+          }
+        
+      });
+      setTimeout(() => {
+        updateDashboard(temp);
+        startAutoRefresh(temp);
+    }, 500);
+    }
 
     function showMeasureOptions() {
       Swal.fire({
@@ -126,92 +189,29 @@
         cancelButtonText: 'Annuler'
       }).then((result) => {
         if (result.isConfirmed) {
-          updateDashboard(result.value);
-        }
-      });
-    }
-
-    function updateDashboard(measureType) {
-      fetch(`/get_measure_data?measure=${measureType}`)
-        .then(response => response.json())
-        .then(data => {
-          updateChart(data, measureType);
-          updateTable(data);
-        })
-        .catch(err => {
-          console.error("Erreur de chargement des données:", err);
-        });
-    }
-
-    function updateChart(data, measureType) {
-      if (measureChart) {
-        measureChart.destroy();
-      }
-
-      const labels = data.map(item => item.timestamp);
-      const values = data.map(item => item.value);
-      
-
-      const ctx = document.getElementById('measureChart').getContext('2d');
-      measureChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: measureType,
-            data: values,
-            borderColor: '#007bff',
-            backgroundColor: 'rgba(0, 123, 255, 0.2)',
-            borderWidth: 2
-          }]
-        },
-        options: {
-          plugins: {
-                legend: {
-                    labels: {
-                        color: 'blue' 
-                    }
-                }
-            },
-          scales: {
-            x: {
-              ticks: {
-                color: 'red' 
-              },
-              title: {
-                display: true,
-                text: 'Temps',
-                color: 'green'
-              }
-            },
-            y: {
-              ticks: {
-                color: 'red' 
-              },
-              title: {
-                display: true,
-                text: 'Valeur',
-                color: 'green'
-              }
-            }
-          }
+          const measureType = result.value;
+          updateDashboard(measureType);
+          startAutoRefresh(measureType);
         }
       });
     }
 
     function updateTable(data) {
       const tbody = document.getElementById('measureTableBody');
-      tbody.innerHTML = ''; // Vider le tableau
-      if(data.length === 0){
-        tbody.innerHTML = '<tr><td colspan="2">Aucune donnée trouvée</td></tr>';
-      } else {
-        data.forEach(item => {
+
+      if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="2">Aucune donnée trouvée</td></tr>';
+          return;
+      }
+      const reversedData = data.reverse();
+
+      reversedData.forEach(item => {
           const row = document.createElement('tr');
           row.innerHTML = `<td>${item.timestamp}</td><td>${item.value} ${item.unit || ''}</td>`;
-          tbody.appendChild(row);
-        });
-      }
-    }
+          tbody.insertBefore(row, tbody.firstChild);
+      });
+
+  }
   </script>
 </body>
 </html>

@@ -148,7 +148,7 @@ a:hover {
 
 .label {
   position: absolute;
-  top: 15px;
+  top: -16px;
   left: 20px;
   transition: 0.2s;
 }
