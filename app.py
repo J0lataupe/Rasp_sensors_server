@@ -3,6 +3,7 @@ from auth import auth
 import threading
 import sqlite3
 import os
+from mesure import Mesure
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -47,7 +48,15 @@ def get_measurements(measure_type):
     conn.close()
     return [{"value": row[0], "timestamp": row[1], "unit": row[2]} for row in rows]
 
-# Ajout de la route manquante
+@app.route('/shutdown', methods=['GET'])
+def shutdown():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func:
+        func()
+    else:
+        print("Impossible d'arrêter Flask proprement.")
+    return 'Shutting down...', 200
+
 @app.route('/get_measure_data')
 def get_measure_data():
     if 'user_id' not in session:
@@ -56,6 +65,12 @@ def get_measure_data():
     measure_type = request.args.get('measure')
     data = get_measurements(measure_type)
     return jsonify(data)
+
+@app.route('/get_alarms')
+def get_alarms():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    return jsonify({"alarms": Mesure.current_alarms})
 
 @app.route('/index')
 def index():

@@ -6,8 +6,8 @@ from mesure import Mesure
 class CurrentData :
 
     def __init__(self):
-        self.obj_Humidity = Mesure("DHT11", "humidity", "", 0, 1000)
-        self.obj_Temperature = Mesure("DHT11", "temp", "", 0, 75)
+        self.obj_Humidity = Mesure("DHT11", "humidity", "%", 0, 1000)
+        self.obj_Temperature = Mesure("DHT11", "temp", "°C", 0, 75)
         self.list_Mesures = [self.obj_Humidity, self.obj_Temperature]
 
 

@@ -31,29 +31,17 @@ def listen_for_input(x_Stop_event):
             break
 
 
-
 def stop_flask():
-    """ Fonction pour arrêter proprement l'application Flask """
+    """ Fonction pour arreter proprement Flask """
     print("Arrêt du serveur Flask...")
     try:
-        # Envoi d'une requête HTTP GET pour arrêter le serveur Flask proprement
         requests.get("http://127.0.0.1:5000/shutdown")
     except Exception as e:
         print(f"Erreur lors de l'arrêt de Flask: {e}")
 
-# Ajouter un endpoint de shutdown dans Flask
-@app.route('/shutdown', methods=['GET'])
-def shutdown():
-    """ Fonction pour arrêter proprement Flask """
-    func = request.environ.get('werkzeug.server.shutdown')
-    if func:
-        func()  # Arrêter Flask
-    else:
-        print("Impossible d'arrêter Flask proprement.")
-    return 'Shutting down...', 200
 
 def run_flask():
-    app.run(debug=True, host='0.0.0.0', use_reloader=False)
+    app.run(debug=True, host='127.0.0.1', use_reloader=False)
 
 if __name__ == "__main__":
     x_Stop_event = threading.Event()

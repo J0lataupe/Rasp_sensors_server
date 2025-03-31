@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -21,6 +20,9 @@
       </a>
     </ul>
   </nav>
+  
+  <div id="alarmBanner" style="display: none; background-color: #ff4444; color: white; padding: 10px; text-align: center; position: sticky; top: 0; z-index: 1000;">
+  </div>
 
   <div class="container">
     <header>
@@ -58,6 +60,21 @@
   </div>
   
   <script>
+    function checkAlarms() {
+      fetch('/get_alarms')
+        .then(response => response.json())
+        .then(data => {
+          const banner = document.getElementById('alarmBanner');
+          if (data.alarms && data.alarms.length > 0) {
+            banner.innerHTML = data.alarms.join('<br>');
+            banner.style.display = 'block';
+          } else {
+            banner.style.display = 'none';
+          }
+        })
+        .catch(err => console.error("Erreur:", err));
+    }
+
     let measureChart = null;
     let refreshInterval = null; // Variable pour stocker l'intervalle
 
@@ -71,8 +88,11 @@
         initChart([], "temp");
       }
 
-      updateTable(temperatures);
+      updateTable(temperatures, "temp");
       startAutoRefresh('temp');
+      
+      // Vérifier les alarmes toutes les 2 secondes
+      setInterval(checkAlarms, 2000);
     });
 
     function startAutoRefresh(measureType, interval = 2000) {
@@ -93,7 +113,7 @@
           } else {
             updateChart(data, measureType);
           }
-          updateTable(data);
+          updateTable(data, measureType);
         })
         .catch(err => console.error("Erreur:", err));
     }
@@ -197,16 +217,18 @@
       });
     }
 
-    function updateTable(data) {
+    function updateTable(data, measureType) {
       const tbody = document.getElementById('measureTableBody');
 
       if (data.length === 0) {
           tbody.innerHTML = '<tr><td colspan="2">Aucune donnée trouvée</td></tr>';
           return;
       }
-      const reversedData = data.reverse();
 
-      reversedData.forEach(item => {
+      data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+      const FilteredData = data.filter(item => item.type === measureType);
+      FilteredData.forEach(item => {
           const row = document.createElement('tr');
           row.innerHTML = `<td>${item.timestamp}</td><td>${item.value} ${item.unit || ''}</td>`;
           tbody.insertBefore(row, tbody.firstChild);
