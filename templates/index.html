@@ -60,11 +60,15 @@
   </div>
   
   <script>
+
+    ///////////////////////////////////
+    ///////// Alarmes    //////////////
+    ///////////////////////////////////
+
     function checkAlarms() {
       fetch('/get_alarms')
         .then(response => response.json())
         .then(data => {
-          console.log("Données :", data);
           const banner = document.getElementById('alarmBanner');
           if (data.alarms && data.alarms.length > 0) {
             banner.innerHTML = data.alarms.join('<br>');
@@ -76,6 +80,11 @@
         .catch(err => console.error("Erreur:", err));
     }
 
+
+    ///////////////////////////////////
+    ///////// Listen Data    //////////
+    ///////////////////////////////////
+
     let measureChart = null;
     let refreshInterval = null; // Variable pour stocker l'intervalle
 
@@ -84,13 +93,13 @@
       const ctx = document.getElementById('measureChart').getContext('2d');
 
       if (temperatures.length > 0) {
-        initChart(temperatures, "temp");
+        initChart(temperatures, "Température");
       } else {
-        initChart([], "temp");
+        initChart([], "Température");
       }
 
-      updateTable(temperatures, "temp");
-      startAutoRefresh('temp');
+      updateTable(temperatures, "Température");
+      startAutoRefresh('Température');
       
       // Vérifier les alarmes toutes les 2 secondes
       setInterval(checkAlarms, 2000);
@@ -119,16 +128,20 @@
         .catch(err => console.error("Erreur:", err));
     }
 
+    ///////////////////////////////////
+    ///////////// Chart    ////////////
+    ///////////////////////////////////
+
     function updateChart(newData, measureType) {
       if (!measureChart || newData.length === 0) return;
 
-      newData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      newData.sort((a, b) => new Date(a.horodatage) - new Date(b.horodatage));
       const lastRecord = newData[newData.length - 1];
 
       const lastLabel = measureChart.data.labels[measureChart.data.labels.length - 1];
-      if (lastLabel !== lastRecord.timestamp) {
-          measureChart.data.labels.push(lastRecord.timestamp);
-          measureChart.data.datasets[0].data.push(lastRecord.value);
+      if (lastLabel !== lastRecord.horodatage) {
+          measureChart.data.labels.push(lastRecord.horodatage);
+          measureChart.data.datasets[0].data.push(lastRecord.valeur);
 
           const maxPoints = 10;
           if (measureChart.data.labels.length > maxPoints) {
@@ -148,10 +161,10 @@
           measureChart.destroy();
       }
 
-      newData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      newData.sort((a, b) => new Date(a.horodatage) - new Date(b.horodatage));
 
-      const labels = newData.map(item => item.timestamp);
-      const values = newData.map(item => item.value);
+      const labels = newData.map(item => item.horodatage);
+      const values = newData.map(item => item.valeur);
 
       measureChart = new Chart(ctx, {
           type: 'line',
@@ -191,32 +204,13 @@
         
       });
       setTimeout(() => {
-        updateDashboard(temp);
-        startAutoRefresh(temp);
+        startAutoRefresh("Température");
     }, 500);
     }
 
-    function showMeasureOptions() {
-      Swal.fire({
-        title: 'Choisissez une mesure',
-        input: 'select',
-        inputOptions: {
-          'temp': 'Température',
-          'humidity': 'Humidité',
-          'flow': 'Débit'
-        },
-        inputPlaceholder: 'Sélectionnez une mesure...',
-        showCancelButton: true,
-        confirmButtonText: 'OK',
-        cancelButtonText: 'Annuler'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          const measureType = result.value;
-          updateDashboard(measureType);
-          startAutoRefresh(measureType);
-        }
-      });
-    }
+    ///////////////////////////////////
+    //////////// Table    /////////////
+    ///////////////////////////////////
 
     function updateTable(data, measureType) {
       const tbody = document.getElementById('measureTableBody');
@@ -226,16 +220,41 @@
           return;
       }
 
-      data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+      data.sort((a, b) => new Date(a.horodatage) - new Date(b.horodatage));
 
-      const FilteredData = data.filter(item => item.f_Value === measureType);
-
-      console.log(FilteredData);
+      const FilteredData = data.filter(item => item.type_mesure === measureType);
       FilteredData.forEach(item => {
           const row = document.createElement('tr');
-          row.innerHTML = `<td>${item.timestamp}</td><td>${item.valeur} ${item.unite || ''}</td>`;
+          row.innerHTML = `<td>${item.horodatage}</td><td>${item.valeur} ${item.unite || ''}</td>`;
           tbody.insertBefore(row, tbody.firstChild);
       });
+
+
+    ///////////////////////////////////
+    ////////////// Choix  /////////////
+    ///////////////////////////////////
+
+    function showMeasureOptions() {
+      Swal.fire({
+        title: 'Choisissez une mesure',
+        input: 'select',
+        inputOptions: {
+          'Température': 'Température',
+          'Humidité': 'Humidité',
+          'Débit': 'Débit'
+        },
+        inputPlaceholder: 'Sélectionnez une mesure...',
+        showCancelButton: true,
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Annuler'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const measureType = result.valeur;
+          updateDashboard(measureType);
+          startAutoRefresh(measureType);
+        }
+      });
+    }
 
   }
   </script>
