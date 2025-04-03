@@ -93,13 +93,13 @@
       const ctx = document.getElementById('measureChart').getContext('2d');
       const strInitData = "Température"
 
-      if (temperatures.length > 0) {
-        initChart(temperatures, strInitData);
+      if (initData.length > 0) {
+        initChart(initData, strInitData);
       } else {
         initChart([], strInitData);
       }
 
-      updateTable(temperatures, strInitData);
+      updateTable(initData, strInitData);
       startAutoRefresh(strInitData);
       
       // Vérifier les alarmes toutes les 2 secondes
@@ -205,9 +205,6 @@
           }
         
       });
-      setTimeout(() => {
-        startAutoRefresh("Température");
-    }, 500);
     }
 
     ///////////////////////////////////
