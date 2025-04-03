@@ -1,5 +1,4 @@
 from gpiozero import LED
-from time import sleep
 
 class Output :
 
@@ -9,7 +8,7 @@ class Output :
 
 
     def Led_On(self) :
-        out.on()
+        self.out.on()
 
     def Led_Off(self) :
-        out.off()
+        self.out.off()

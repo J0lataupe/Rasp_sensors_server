@@ -12,16 +12,16 @@ class Mesure :
 
     def threshold_check(self, led_alarme=None) :
         if self.f_Value > self.f_Threshold_max or self.f_Value < self.f_Threshold_min :
-            if led_alarme :
-                led_alarme.Led_On()
             alarm_message = f'⚠ Alerte : {self.str_Type_mesure} hors limites ! | Min : {self.f_Threshold_min}, Max : {self.f_Threshold_max}'
             print(alarm_message)
             if alarm_message not in Mesure.current_alarms:
                 Mesure.current_alarms.append(alarm_message)
         else:
-            if led_alarme :
-                led_alarme.Led_Off()
             # Supression de l'alarme si la valeur est dans les limites
             Mesure.current_alarms = [alarm for alarm in Mesure.current_alarms 
                                    if self.str_Type_mesure not in alarm]
+        if Mesure.current_alarms == [] :
+            led_alarme.Led_Off()
+        else :
+            led_alarme.Led_On()
 
