@@ -14,6 +14,7 @@ Une application web Flask pour la surveillance en temps réel des capteurs conne
 pip install -r requirements.txt
 ```
 3. Connectez vos capteurs au Raspberry Pi (DHT11 sur le GPIO 4)
+   > Note : Vous pouvez facilement ajouter d'autres capteurs en les déclarant dans le fichier `current_data.py`
 4. Connectez la LED d'alarme sur le GPIO 17
 
 ### Utilisation
@@ -30,7 +31,6 @@ python main.py
 - 🔐 Système d'authentification
 - 📈 Graphiques en temps réel
 - 🚨 Système d'alarme avec LED
-- 📱 Adaptatif mobile
 - 🌡️ Support des capteurs DHT11
 
 ---
@@ -47,6 +47,7 @@ A Flask web application for real-time monitoring of sensors connected to a Raspb
 pip install -r requirements.txt
 ```
 3. Connect your sensors to the Raspberry Pi (DHT11 on GPIO 4)
+   > Note: You can easily add more sensors by declaring them in the `current_data.py` file
 4. Connect the alarm LED to GPIO 17
 
 ### Usage
@@ -63,5 +64,4 @@ python main.py
 - 🔐 Authentication system
 - 📈 Real-time charts
 - 🚨 Alarm system with LED
-- 📱 Mobile responsive
 - 🌡️ DHT11 sensors support
