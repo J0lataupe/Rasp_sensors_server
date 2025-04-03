@@ -7,7 +7,7 @@ class CurrentData :
 
     def __init__(self):
         self.obj_Humidity = Mesure("DHT11", "Humidité", "%", 0, 75)
-        self.obj_Temperature = Mesure("DHT11", "Température", "°C", 0, 20)
+        self.obj_Temperature = Mesure("DHT11", "Température", "°C", 0, 25)
         self.list_Mesures = [self.obj_Humidity, self.obj_Temperature]
 
 
