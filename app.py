@@ -13,18 +13,6 @@ app.register_blueprint(auth)
 def init_db():
     conn = sqlite3.connect('mesures.db')
     cursor = conn.cursor()
-    """
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS mesures (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        capteur TEXT NOT NULL,
-        type_mesure TEXT NOT NULL,
-        valeur REAL NOT NULL,
-        unite TEXT NOT NULL,
-        horodatage DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    ''')
-    """
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

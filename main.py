@@ -3,11 +3,13 @@ import threading
 from flask import Flask, request
 import requests
 
+from output import Output
 from current_data import CurrentData
 from app import *
 
 
 obj_Current_data = CurrentData()
+LedAlarme = Output(17)
 
 
 def main_loop(x_Stop_event):
@@ -15,7 +17,7 @@ def main_loop(x_Stop_event):
         obj_Current_data.acquisition_data()
 
         for obj_Mesure in obj_Current_data.list_Mesures :
-            obj_Mesure.threshold_check()
+            obj_Mesure.threshold_check(LedAlarme)
 
         time.sleep(5)
 
