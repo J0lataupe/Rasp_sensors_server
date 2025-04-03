@@ -1,0 +1,5 @@
+Adafruit_DHT==1.4.0
+Flask==3.1.0
+gpiozero==2.0.1
+Requests==2.32.3
+Werkzeug==3.1.3
